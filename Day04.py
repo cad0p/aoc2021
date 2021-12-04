@@ -2,6 +2,7 @@ from collections import deque
 import re
 import numpy as np
 import os
+from copy import deepcopy
 
 def solve_part_one(bingo_subsystem):
     """--- Day 4: Giant Squid ---
@@ -65,9 +66,13 @@ To guarantee victory against the giant squid, figure out which board will win fi
     winner = None
     boards_status = boards.copy()
     draw_number = DrawNumber()
-    while not winner:
+    i = 0
+    while not winner and i < 50:
         draw = draw_order.popleft()
         winner, boards_status = draw_number(boards_status, draw)
+        i += 1
+    # print(f'\n\n\n\ndraw: {draw:2} iteration: {i:2}')
+    # print_boards(boards_status, parallel=6)
     return get_score(boards_status[winner], draw)
 
 
@@ -84,6 +89,31 @@ def preprocess_input(input: str):
     return bingo_subsystem
 
 
+def print_boards(boards, parallel=0):
+    parallel_i = 0
+    parallel_boards = []
+    for board_i, board in enumerate(boards):
+        if not parallel_boards:
+            parallel_boards = deepcopy(board)
+        elif parallel_i <= parallel:
+            for i in range(len(board)):
+                parallel_boards[i].extend(['    '] + board[i])
+        parallel_i += 1
+        
+        if parallel_i > parallel or board_i == len(boards) - 1:
+            print_board(parallel_boards)
+            parallel_boards = []
+            parallel_i = 0
+
+
+def print_board(board):
+    print()
+    for row in board:
+        for num in row:
+            print(f'{num:2}', end=' ')
+        print()
+
+
 def get_score(board_status, last_draw):
     sum_unmarked_numbers = 0
     for row in board_status:
@@ -97,22 +127,23 @@ class DrawNumber:
         self.draw_i = 0
         """ the draw iteration """
     def __call__(self, boards_status, draw):
-        # print(draw)
-        # print(boards_status)
         self.draw_i += 1
         winner = None
         for b, board in enumerate(list(boards_status)):
-            hor = ver = np.array([True] * len(board))
+            ver = [True] * len(board)
+            hor = ver.copy()
             for i, row in enumerate(board):
                 for j, num in enumerate(row):
                     if num == draw:
                         boards_status[b][i][j] = num = ''
+                    
                     hor[i] = hor[i] and num == ''
                     ver[j] = ver[j] and num == ''
-                    if (j == len(board) - 1 and ver[i] 
-                        or i == len(board) - 1 and hor[j]
-                        ):
+                    
+                    if (j == len(board) - 1 and hor[i] 
+                            or i == len(board) - 1 and ver[j]):
                         winner = b
+                        # print("WINNER", winner)
         return winner, boards_status
 
 def get_boards(boards_lines):
@@ -149,6 +180,10 @@ def get_aoc_input_auto(filename: str):
     return get_aoc_input(year, day, local=True)
 
 def get_aoc_input(year, day, save=False, local=False) -> str:
+    """ if you want to save the test input,
+    first run it with save=True to save it,
+    then run it with local=True to use the local version
+    """
     BASE_URL = 'https://adventofcode.com'
     uri = f'{BASE_URL}/{year}/day/{day}/input'
     save_path = __file__[:-2]+'txt'

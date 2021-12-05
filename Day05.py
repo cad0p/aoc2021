@@ -40,8 +40,8 @@ Consider only horizontal and vertical lines. At how many points do at least two 
 
 """
     # let's use a hash map to keep track of the points already passed
-    visited_points = {}
     dangerous_n_points = 0
+    visited_points = {}
     """ hash map to keep track of the points already passed """
     for vent_line in vent_lines:
         start_loc, end_loc = vent_line
@@ -68,7 +68,72 @@ Consider only horizontal and vertical lines. At how many points do at least two 
     return dangerous_n_points
 
 def solve_part_two(vent_lines):
-    pass
+    """--- Part Two ---
+Unfortunately, considering only horizontal and vertical lines doesn't give you the full picture; you need to also consider diagonal lines.
+
+Because of the limits of the hydrothermal vent mapping system, the lines in your list will only ever be horizontal, vertical, or a diagonal line at exactly 45 degrees. In other words:
+
+An entry like 1,1 -> 3,3 covers points 1,1, 2,2, and 3,3.
+An entry like 9,7 -> 7,9 covers points 9,7, 8,8, and 7,9.
+Considering all lines from the above example would now produce the following diagram:
+
+1.1....11.
+.111...2..
+..2.1.111.
+...1.2.2..
+.112313211
+...1.2....
+..1...1...
+.1.....1..
+1.......1.
+222111....
+You still need to determine the number of points where at least two lines overlap. In the above example, this is still anywhere in the diagram with a 2 or larger - now a total of 12 points.
+
+Consider all of the lines. At how many points do at least two lines overlap?"""
+    # let's use a hash map to keep track of the points already passed
+    dangerous_n_points = 0
+    visited_points = {}
+    """ hash map to keep track of the points already passed """
+    for vent_line in vent_lines:
+        start_loc, end_loc = vent_line
+        start_x, start_y = start_loc
+        end_x, end_y = end_loc
+
+        x_range = min(start_x, end_x), max(start_x, end_x) + 1
+        y_range = min(start_y, end_y), max(start_y, end_y) + 1
+        
+        # add constraint to only follow straight lines and diagonal lines:
+        if      (x_range[1] - x_range[0] > 1 and y_range[1] - y_range[0] > 1
+                and x_range[1] - x_range[0] != y_range[1] - y_range[0]):
+            continue
+
+        x, y = start_x, start_y
+        for i in range(max(x_range[1] - x_range[0], y_range[1] - y_range[0])):
+            point_string = f'{x},{y}'
+            if point_string in visited_points:
+                if visited_points[point_string] == 1:
+                    dangerous_n_points += 1
+                visited_points[point_string] += 1
+            else:
+                visited_points[point_string] = 1
+            
+            if start_x == end_x:
+                pass
+            elif x_range[0] == start_x:
+                x += 1
+            elif x_range[0] == end_x:
+                x -= 1
+            # don't need to act on horizontal lines
+            # same for y
+            if start_y == end_y:
+                pass
+            elif y_range[0] == start_y:
+                y += 1
+            elif y_range[0] == end_y:
+                y -= 1
+            
+
+    return dangerous_n_points
 
 def preprocess_input(input):
     vent_lines = []

@@ -63,21 +63,52 @@ To guarantee victory against the giant squid, figure out which board will win fi
 """
     draw_order = bingo_subsystem["draw_order"]
     boards = bingo_subsystem["boards"]
-    winner = None
+    winners = []
     boards_status = boards.copy()
     draw_number = DrawNumber()
     i = 0
-    while not winner and i < 50:
+    while not winners and i < 50:
         draw = draw_order.popleft()
-        winner, boards_status = draw_number(boards_status, draw)
+        winners, boards_status = draw_number(boards_status, draw)
         i += 1
+    winner = winners[0]
     # print(f'\n\n\n\ndraw: {draw:2} iteration: {i:2}')
     # print_boards(boards_status, parallel=6)
     return get_score(boards_status[winner], draw)
 
 
 def solve_part_two(bingo_subsystem):
-    pass
+    """--- Part Two ---
+On the other hand, it might be wise to try a different strategy: let the giant squid win.
+
+You aren't sure how many bingo boards a giant squid could play at once, so rather than waste time counting its arms, the safe thing to do is to figure out which board will win last and choose that one. That way, no matter which boards it picks, it will win for sure.
+
+In the above example, the second board is the last to win, which happens after 13 is eventually called and its middle column is completely marked. If you were to keep playing until this point, the second board would have a sum of unmarked numbers equal to 148 for a final score of 148 * 13 = 1924.
+
+Figure out which board will win last. Once it wins, what would its final score be?
+"""
+    draw_order = bingo_subsystem["draw_order"]
+    boards = bingo_subsystem["boards"]
+    boards_status = boards.copy()
+    draw_number = DrawNumber()
+    i = 0
+    winners = []
+    # while there is only one board left to win
+    while len(winners) < len(boards) and draw_order:
+        draw = draw_order.popleft()
+        round_winners, boards_status = draw_number(boards_status, draw)
+        if round_winners:
+            print(round_winners)
+            winners.extend(round_winners)
+            # if it's not the last winner
+            if len(winners) < len(boards):
+                boards_status = exclude_winners(round_winners, boards_status)
+            if len(winners) > len(boards) - 3:
+                print(f'\n\n\n\ndraw: {draw:2} iteration: {i:2}')
+                print_boards(boards_status, parallel=6)
+        i += 1
+    last_winner = round_winners[0]
+    return get_score(boards_status[last_winner], draw)
 
 
 def preprocess_input(input: str):
@@ -87,6 +118,15 @@ def preprocess_input(input: str):
         "boards": get_boards(lines[1:])
     }
     return bingo_subsystem
+
+
+def exclude_winners(winners, boards_status):
+    board_size = len(boards_status[winners[0]])
+    for winner in winners:
+        for i in range(board_size):
+            for j in range(board_size):
+                boards_status[winner][i][j] = '-'
+    return boards_status
 
 
 def print_boards(boards, parallel=0):
@@ -128,7 +168,7 @@ class DrawNumber:
         """ the draw iteration """
     def __call__(self, boards_status, draw):
         self.draw_i += 1
-        winner = None
+        winners = []
         for b, board in enumerate(list(boards_status)):
             ver = [True] * len(board)
             hor = ver.copy()
@@ -140,11 +180,11 @@ class DrawNumber:
                     hor[i] = hor[i] and num == ''
                     ver[j] = ver[j] and num == ''
                     
-                    if (j == len(board) - 1 and hor[i] 
+                    if b not in winners and (j == len(board) - 1 and hor[i] 
                             or i == len(board) - 1 and ver[j]):
-                        winner = b
-                        # print("WINNER", winner)
-        return winner, boards_status
+                        winners.append(b)
+                        # print("WINNER", winners[0])
+        return winners, boards_status
 
 def get_boards(boards_lines):
     boards = []
@@ -196,6 +236,7 @@ def get_aoc_input(year, day, save=False, local=False) -> str:
             with open(save_path, 'w') as f:
                 f.write(input)
         return input
+    # comment this to run the example below
     elif os.path.exists(save_path):
         with open(save_path, 'r') as f:
             return f.read()

@@ -1,5 +1,8 @@
 
-def solve_part_one(crabs, fuel_cost=1):
+from typing import List
+
+
+def solve_part_one(crabs: List[int], fuel_cost=1):
     """--- Day 7: The Treachery of Whales ---
 A giant whale has decided your submarine is its next meal, and it's much faster than you are. There's nowhere to run!
 
@@ -32,22 +35,13 @@ This costs a total of 37 fuel. This is the cheapest possible outcome; more expen
 
 Determine the horizontal position that the crabs can align to using the least fuel possible. How much fuel must they spend to align to that position?
 """
-    min_crab = max_crab = None
-    avg_crab = 0
-    n_crabs = 0
-    for crab in crabs:
-        avg_crab += crab
-        n_crabs += 1
-        if min_crab is None or crab < min_crab:
-            min_crab = crab
-        elif max_crab is None or crab > max_crab:
-            max_crab = crab
-    avg_crab /= n_crabs
+    min_crab = max_crab = min(crabs), max(crabs)
+    median_crab = crabs.index(sorted(crabs)[len(crabs)//2])
     radius = 0
     prev_x_i = prev_x = x_i = x = None
     while (prev_x is None or x <= prev_x):
         prev_x_i, prev_x = x_i, x
-        x_i, x = get_lowest_fuel(crabs, start=avg_crab, radius=radius)
+        x_i, x = get_lowest_fuel(crabs, start=median_crab, radius=radius)
         radius += 1
         
 

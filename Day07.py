@@ -2,7 +2,7 @@
 from typing import List
 
 
-def solve_part_one(crabs: List[int], fuel_cost=1):
+def solve_part_one(crabs: List[int], fuel_cost=lambda x: x):
     """--- Day 7: The Treachery of Whales ---
 A giant whale has decided your submarine is its next meal, and it's much faster than you are. There's nowhere to run!
 
@@ -35,36 +35,65 @@ This costs a total of 37 fuel. This is the cheapest possible outcome; more expen
 
 Determine the horizontal position that the crabs can align to using the least fuel possible. How much fuel must they spend to align to that position?
 """
-    min_crab = max_crab = min(crabs), max(crabs)
     median_crab = crabs.index(sorted(crabs)[len(crabs)//2])
     radius = 0
     prev_x_i = prev_x = x_i = x = None
     while (prev_x is None or x <= prev_x):
         prev_x_i, prev_x = x_i, x
-        x_i, x = get_lowest_fuel(crabs, start=median_crab, radius=radius)
+        x_i, x = get_lowest_fuel(crabs, fuel_cost, start=median_crab, radius=radius)
         radius += 1
-        
+    return get_fuel_sum(crabs, fuel_cost, prev_x_i)
 
-    return prev_x_i
+def solve_part_two(crabs):
+    """--- Part Two ---
+The crabs don't seem interested in your proposed solution. Perhaps you misunderstand crab engineering?
 
-def solve_part_two(input):
-    pass
+As it turns out, crab submarine engines don't burn fuel at a constant rate. Instead, each change of 1 step in horizontal position costs 1 more unit of fuel than the last: the first step costs 1, the second step costs 2, the third step costs 3, and so on.
+
+As each crab moves, moving further becomes more expensive. This changes the best horizontal position to align them all on; in the example above, this becomes 5:
+
+Move from 16 to 5: 66 fuel
+Move from 1 to 5: 10 fuel
+Move from 2 to 5: 6 fuel
+Move from 0 to 5: 15 fuel
+Move from 4 to 5: 1 fuel
+Move from 2 to 5: 6 fuel
+Move from 7 to 5: 3 fuel
+Move from 1 to 5: 10 fuel
+Move from 2 to 5: 6 fuel
+Move from 14 to 5: 45 fuel
+This costs a total of 168 fuel. This is the new cheapest possible outcome; the old alignment position (2) now costs 206 fuel instead.
+
+Determine the horizontal position that the crabs can align to using the least fuel possible so they can make you an escape route! How much fuel must they spend to align to that position?
+"""
+    fuel_cost = FuelCost()
+    return solve_part_one(crabs, fuel_cost)
+
+class FuelCost():
+    def __init__(self):
+        self.cache = {}
+    def __call__(self, x):
+        if not x:
+            return x
+        if x not in self.cache.items():
+            self.cache[x] = x + self.__call__(x - 1)
+        return self.cache[x]
 
 
-def get_fuel_sum(crabs, pos):
-    return sum([abs(c - pos) for c in crabs])
+def get_fuel_sum(crabs, fuel_cost, pos):
+    return sum([fuel_cost(abs(c - pos)) for c in crabs])
 
 
-def get_lowest_fuel(crabs, start=0, radius=0):
+def get_lowest_fuel(crabs, fuel_cost, start=0, radius=0):
     if not radius and start == int(start):
-            return start, get_fuel_sum(crabs, start)
+            return start, get_fuel_sum(crabs, fuel_cost, start)
     offset = 1 if start > 0 else -1
     if start == int(start):
         offset = 0
     start = int(start)
     pos = [start - radius, start + offset + radius]
-    left_fuel_sum = get_fuel_sum(crabs, pos[0])
-    right_fuel_sum = get_fuel_sum(crabs, pos[1])
+    left_fuel_sum = get_fuel_sum(crabs, fuel_cost, pos[0])
+    right_fuel_sum = get_fuel_sum(crabs, fuel_cost, pos[1])
     if left_fuel_sum < right_fuel_sum:
         return pos[0], left_fuel_sum
     else:

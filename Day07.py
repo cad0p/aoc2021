@@ -66,18 +66,9 @@ This costs a total of 168 fuel. This is the new cheapest possible outcome; the o
 
 Determine the horizontal position that the crabs can align to using the least fuel possible so they can make you an escape route! How much fuel must they spend to align to that position?
 """
-    fuel_cost = FuelCost()
+    def fuel_cost(x):
+        return x * (x + 1) // 2
     return solve_part_one(crabs, fuel_cost)
-
-class FuelCost():
-    def __init__(self):
-        self.cache = {}
-    def __call__(self, x):
-        if not x:
-            return x
-        if x not in self.cache.items():
-            self.cache[x] = x + self.__call__(x - 1)
-        return self.cache[x]
 
 
 def get_fuel_sum(crabs, fuel_cost, pos):

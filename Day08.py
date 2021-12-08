@@ -3,6 +3,8 @@
 
 from typing import List
 
+SIGNALS = 'abcdefg'
+
 NUMBERS_LINES = {
     2: 1,
     3: 7,
@@ -15,10 +17,14 @@ NUMBERS_LINES = {
 
 NUMBERS_MAPPING = {
     0: 'abcefg',
+    1: 'cf',
     2: 'acdeg',
     3: 'acdfg',
+    4: 'bcdf',
     5: 'abdfg',
     6: 'abdefg',
+    7: 'acf',
+    8: SIGNALS,
     9: 'abcdfg'
 }
 
@@ -47,7 +53,25 @@ class Entry():
         return self.__dict__.__str__
 
     def __get_mapping(self):
-        return self.get_standard_digit
+        mapping = {c: set(SIGNALS) for c in SIGNALS}
+        for pattern in self.signal_patterns:
+            digits = NUMBERS_LINES[len(pattern)]
+            # for example dab => 7
+            # so, 7 (acf) a, c and f can only be in 'dab'
+            if isinstance(digit:=digits, int):
+                for c in NUMBERS_MAPPING[digit]:
+                    if isinstance(mapping[c], str):
+                        continue
+                    mapping[c].intersection_update(pattern)
+                    if not mapping[c]:
+                        raise FileNotFoundError('mapping not found')
+                    elif len(mapping[c]) == 1:
+                        mapping[c] = mapping[c].pop()
+        print(mapping)
+
+        def entry_mapping(signal):
+            return self.get_standard_digit(signal)
+        return entry_mapping
 
     def __decode_digits(self):
         digits = []
@@ -133,6 +157,7 @@ def solve_part_two(notes: List[Entry]):
 Through a little deduction, you should now be able to determine the remaining digits. Consider again the first example above:
 
 acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf
+
 After some careful analysis, the mapping between signal wires and segments only make sense in the following configuration:
 
  dddd
@@ -236,6 +261,7 @@ def get_aoc_input(year, day, save=False, local=False) -> str:
     else:
         from inspect import cleandoc as indent
         # https://stackoverflow.com/questions/2504411/proper-indentation-for-python-multiline-strings
+        return("acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf")
         return indent("""
             be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
             edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc

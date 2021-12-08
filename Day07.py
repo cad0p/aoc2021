@@ -1,5 +1,6 @@
 
 from typing import List
+from time import time
 
 
 def solve_part_one(crabs: List[int], fuel_cost=lambda x: x):
@@ -35,13 +36,17 @@ This costs a total of 37 fuel. This is the cheapest possible outcome; more expen
 
 Determine the horizontal position that the crabs can align to using the least fuel possible. How much fuel must they spend to align to that position?
 """
+    # it works either way, with median or average
+    start_time = time()
     median_crab = crabs.index(sorted(crabs)[len(crabs)//2])
+    # avg_crab = sum(crabs)/len(crabs)
     radius = 0
     prev_x_i = prev_x = x_i = x = None
     while (prev_x is None or x <= prev_x):
         prev_x_i, prev_x = x_i, x
         x_i, x = get_lowest_fuel(crabs, fuel_cost, start=median_crab, radius=radius)
         radius += 1
+    print(time() - start_time)
     return get_fuel_sum(crabs, fuel_cost, prev_x_i)
 
 def solve_part_two(crabs):

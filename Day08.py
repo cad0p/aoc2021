@@ -13,13 +13,48 @@ NUMBERS_LINES = {
 }
 """ key: the number of lines, value: the numbers that have that number of lines """
 
+NUMBERS_MAPPING = {
+    0: 'abcefg',
+    2: 'acdeg',
+    3: 'acdfg',
+    5: 'abdfg',
+    6: 'abdefg',
+    9: 'abcdfg'
+}
+
 class Entry():
-    def __init__(self, signal_patterns, output_values):
+    def get_standard_digit(self, signal: str):
+        digits = NUMBERS_LINES[len(signal)]
+        if isinstance(digit:=digits, int):
+            return digit
+        for digit in digits:
+            encoding = NUMBERS_MAPPING[digit]
+            match = 0
+            for c in signal:
+                if c in encoding:
+                    match += 1
+            if match == len(encoding):
+                return digit
+        raise FileNotFoundError('digit not found')
+
+    def __init__(self, signal_patterns, output_value):
         self.signal_patterns = signal_patterns
-        self.output_values = output_values
+        self.output_value = output_value
+        self.mapping = self.__get_mapping()
+        self.decoded_digits = self.__decode_digits()
     
     def __repr__(self):
         return self.__dict__.__str__
+
+    def __get_mapping(self):
+        return self.get_standard_digit
+
+    def __decode_digits(self):
+        digits = []
+        for signal in self.output_value:
+            digit = self.mapping(signal)
+            digits.append(digit)
+        return digits
 
 
 def solve_part_one(notes: List[Entry]):
@@ -86,25 +121,80 @@ In the output values, how many times do digits 1, 4, 7, or 8 appear?
         # for pattern in entry.signal_patterns:
         #     if isinstance(NUMBERS_LINES[len(pattern)], int):
         #         # and it's not a list, meaning it's the only possible number that matches the pattern
-        for value in entry.output_values:
-            if isinstance(NUMBERS_LINES[len(value)], int):
+        for digit in entry.output_value:
+            if isinstance(NUMBERS_LINES[len(digit)], int):
                 # and it's not a list, meaning it's the only possible number that matches the pattern
                 # ant thut it's one of the simple digits
                 counter_simple_digits += 1
     return counter_simple_digits
 
-def solve_part_two(crabs):
-    pass
+def solve_part_two(notes: List[Entry]):
+    """--- Part Two ---
+Through a little deduction, you should now be able to determine the remaining digits. Consider again the first example above:
+
+acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf
+After some careful analysis, the mapping between signal wires and segments only make sense in the following configuration:
+
+ dddd
+e    a
+e    a
+ ffff
+g    b
+g    b
+ cccc
+So, the unique signal patterns would correspond to the following digits:
+
+acedgfb: 8
+cdfbe: 5
+gcdfa: 2
+fbcad: 3
+dab: 7
+cefabd: 9
+cdfgeb: 6
+eafb: 4
+cagedb: 0
+ab: 1
+Then, the four digits of the output value can be decoded:
+
+cdfeb: 5
+fcadb: 3
+cdfeb: 5
+cdbaf: 3
+Therefore, the output value for this entry is 5353.
+
+Following this same process for each entry in the second, larger example above, the output value of each entry can be determined:
+
+fdgacbe cefdb cefbgd gcbe: 8394
+fcgedb cgb dgebacf gc: 9781
+cg cg fdcagb cbg: 1197
+efabcd cedba gadfec cb: 9361
+gecf egdcabf bgf bfgea: 4873
+gebdcfa ecba ca fadegcb: 8418
+cefg dcbef fcge gbcadfe: 4548
+ed bcgafe cdgba cbgef: 1625
+gbdfcae bgc cg cgb: 8717
+fgae cfgab fg bagce: 4315
+Adding all of the output values in this larger example produces 61229.
+
+For each entry, determine all of the wire/segment connections and decode the four-digit output values. What do you get if you add up all of the output values?
+"""
+    sum_values = 0
+    for entry in notes:
+        value = ''
+        for digit in entry.decoded_digits:
+            value += digit
+        sum_values += int(value)
+    return sum_values
 
 
 
 def preprocess_input(input):
     notes = []
     for entry in input.splitlines():
-        signal_patterns, output_values = entry.split(' | ')
+        signal_patterns, output_value = entry.split(' | ')
         entry = Entry(
             signal_patterns=signal_patterns.split(' '),
-            output_values=output_values.split(' ')
+            output_value=output_value.split(' ')
         )
         notes.append(entry)
     return notes
@@ -119,7 +209,7 @@ from secret import SESSION_ID, USER_AGENT # create a file named "secret.py"
 def get_aoc_input_auto(filename: str):
     year = int(filename[-13:-9])
     day = int(filename[-5:-3])
-    return get_aoc_input(year, day, save=True)
+    return get_aoc_input(year, day, local=True)
 
 def get_aoc_input(year, day, save=False, local=False) -> str:
     """ if you want to save the test input,
@@ -139,10 +229,10 @@ def get_aoc_input(year, day, save=False, local=False) -> str:
             with open(save_path, 'w') as f:
                 f.write(input)
         return input
-    # comment this to run the example below
-    elif os.path.exists(save_path):
-        with open(save_path, 'r') as f:
-            return f.read()
+    # # comment this to run the example below
+    # elif os.path.exists(save_path):
+    #     with open(save_path, 'r') as f:
+    #         return f.read()
     else:
         from inspect import cleandoc as indent
         # https://stackoverflow.com/questions/2504411/proper-indentation-for-python-multiline-strings

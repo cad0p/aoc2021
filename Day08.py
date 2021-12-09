@@ -53,14 +53,11 @@ class Entry():
         return self.__dict__.__str__
 
     def __get_mapping(self):
-        mapping = {c: set(SIGNALS) for c in SIGNALS}
-        patterns_with_len = {}
-        for pattern in self.signal_patterns:
-            digits = NUMBERS_LINES[len(pattern)]
-            # for example dab => 7
-            # so, 7 (acf) a, c and f can only be in 'dab'
-            if isinstance(digit:=digits, int):
-                for c in NUMBERS_MAPPING[digit]:
+
+        def update_mapping(digit, pattern):
+            """ # for example dab => 7
+            # so, 7 (acf) a, c and f can only be in 'dab' """
+            for c in NUMBERS_MAPPING[digit]:
                     if isinstance(mapping[c], str):
                         continue
                     mapping[c].intersection_update(pattern)
@@ -68,87 +65,31 @@ class Entry():
                         raise FileNotFoundError('mapping not found')
                     elif len(mapping[c]) == 1:
                         mapping[c] = mapping[c].pop()
+
+        mapping = {c: set(SIGNALS) for c in SIGNALS}
+        patterns_with_len = {}
+        numbers_patterns = {n: None for n in NUMBERS_MAPPING}
+        for pattern in self.signal_patterns:
+            digits = NUMBERS_LINES[len(pattern)]
+            # for example dab => 7
+            # so, 7 (acf) a, c and f can only be in 'dab'
+            if isinstance(digit:=digits, int):
+                numbers_patterns[digit] = pattern
+                update_mapping(digit, pattern)    
             else:
                 if len(pattern) not in patterns_with_len:
                     patterns_with_len[len(pattern)] = []
                 patterns_with_len[len(pattern)].append(pattern)
         print(patterns_with_len)
-        # once we know the easy mappings,
-        # these are the options
-        # {'a': {'b', 'd', 'a'}, 
-        # 'b': {'e', 'b', 'f', 'a'}, 
-        # 'c': {'b', 'a'}, 
-        # 'd': {'e', 'b', 'f', 'a'}, 
-        # 'e': {'c', 'b', 'f', 'a', 'e', 'd', 'g'}, 
-        # 'f': {'b', 'a'}, 
-        # 'g': {'c', 'b', 'f', 'a', 'e', 'd', 'g'}}
-        for pattern_len, patterns in patterns_with_len.items():
-            # 5, [cdfbe, gcdfa, fbcad]
-            digits = NUMBERS_LINES[pattern_len]
-            for digit in digits:
-                # 2, 3, 5
-                for pattern in patterns:
-                    if not can_pattern_be_mapped_to_digit(pattern, digit):
-                        # remove pattern from digit
+        # using 1, 7, 4, we derive 2, 3, 5
+        # for len_pattern, patterns in patterns_with_len.items():
+        #     if len_pattern == 5: # 2, 3, 5
 
-            # for example cdfbe, gcdfa, fbcad have to be assigned to 2, 3 or 5
-            # 2, 3, 5 in standard mapping are "acdeg", "acdfg" and "abdfg"
-            # can we know which one of those it's the one?
-            # for 2: 
-            # a can be b, d or a
-            # c can be b or a
-            # d can be e, b, f or a
-            # e can be SIGNALS
-            # g can be SIGNALS
-            # cdfbe => 2?
-            # for a: cdfbe contains d and b
-            # for c: cdfbe contains  b
-            # for d: cdfbe contains e, b, f
-            # for e and g they are for sure verified
-            # so cdfbe could be 2
-            # gcdfa => 2?
-            # for a: gcdfa contains a, d
-            # for c: gcdfa contains a
-            # for d: gcdfa contains f, a
-            # for e and g they are for sure verified
-            # so gcdfa could be 2
-            # fbcad => 2?
-            # for a: fbcad contains b, d, a
-            # for c: fbcad contains b, a
-            # for d: fbcad contains b, f, a
-            # for e and g they are for sure verified
-            # so fbcad could be 2
-
-            # for 3:
-            # a can be b, d or a
-            # c can be b or a
-            # d can be e, b, f or a
-            # f can be b or a
-            # g can be SIGNALS
-            # cdfbe => 3?
-            # for a: cdfbe contains d, b
-            # for c: cdfbe contains b
-            # for d: cdfbe contains e, b, f
-            # for f: cdfbe contains b
-            # for g: it is for sure verified
-            # so cdfbe could be 3
-
-            # for 5 (abdfg):
-            # a can be b, d or a
-            # b can be {'e', 'b', 'f', 'a'}
-            # d can be e, b, f or a
-            # f can be b or a
-            # g can be SIGNALS
-            # cdfbe => 5?
-            # for a: cdfbe contains d, b
-            # for b: cdfbe contains f, b, e
-            # for d: cdfbe contains e, b, f
-            # for f: cdfbe contains b
-            # for g: it is for sure verified
-            # so cdfbe could be 5
+        
                 
         print(mapping)
 
+        
         def entry_mapping(signal):
             return self.get_standard_digit(signal)
         return entry_mapping

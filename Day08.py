@@ -55,21 +55,8 @@ class Entry():
     def __get_mapping(self):
 
         def update_mapping(digit, pattern):
-            """ # for example dab => 7
-            # so, 7 (acf) a, c and f can only be in 'dab' """
-
             numbers_patterns[digit] = set(pattern)
 
-            for c in NUMBERS_MAPPING[digit]:
-                    if isinstance(mapping[c], str):
-                        continue
-                    mapping[c].intersection_update(pattern)
-                    if not mapping[c]:
-                        raise FileNotFoundError('mapping not found')
-                    elif len(mapping[c]) == 1:
-                        mapping[c] = mapping[c].pop()
-
-        mapping = {c: set(SIGNALS) for c in SIGNALS}
         patterns_with_len: Dict[int, List[str]] = {}
         numbers_patterns: Dict[int, set[str]] = {n: None for n in NUMBERS_MAPPING}
         for pattern in self.signal_patterns:
@@ -82,7 +69,7 @@ class Entry():
                 if len(pattern) not in patterns_with_len:
                     patterns_with_len[len(pattern)] = []
                 patterns_with_len[len(pattern)].append(pattern)
-        print(patterns_with_len)
+        # print(patterns_with_len)
         # KEY THING: using 1, 4, 7 we derive 
         # got from: https://github.com/SnoozeySleepy/AdventofCode/blob/main/day8.py
         # len 5: 2, 3, 5
@@ -103,22 +90,13 @@ class Entry():
                         update_mapping(9, pattern)
                     else:
                         update_mapping(0, pattern)
-                
-        print(mapping)
-        print(numbers_patterns)
-        for value, mapped_value in mapping.items():
-            if not isinstance(mapped_value, str) and mapped_value:
-                mapping[value] = mapping[value].pop()
-            elif isinstance(mapped_value, str):
-                pass
-            else:
-                raise AssertionError(f'{value} cannot be mapped')
+
         
-        def entry_mapping(signal):
-            standard_signal = ''
-            for c in signal:
-                standard_signal += mapping[c]
-            return self.get_standard_digit(standard_signal)
+        def entry_mapping(signal: str):
+            signal = set(signal)
+            for number, pattern in numbers_patterns.items():
+                if signal == pattern:
+                    return number
         return entry_mapping
 
     def __decode_digits(self):
@@ -256,7 +234,7 @@ For each entry, determine all of the wire/segment connections and decode the fou
     for entry in notes:
         value = ''
         for digit in entry.decoded_digits:
-            value += digit
+            value += str(digit)
         sum_values += int(value)
     return sum_values
 
@@ -303,14 +281,14 @@ def get_aoc_input(year, day, save=False, local=False) -> str:
             with open(save_path, 'w') as f:
                 f.write(input)
         return input
-    # # comment this to run the example below
-    # elif os.path.exists(save_path):
-    #     with open(save_path, 'r') as f:
-    #         return f.read()
+    # comment this to run the example below
+    elif os.path.exists(save_path):
+        with open(save_path, 'r') as f:
+            return f.read()
     else:
         from inspect import cleandoc as indent
         # https://stackoverflow.com/questions/2504411/proper-indentation-for-python-multiline-strings
-        return("acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf")
+        # return("acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf")
         return indent("""
             be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
             edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc

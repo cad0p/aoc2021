@@ -1,10 +1,18 @@
 
 
 
-from typing import Dict, List
+from typing import List, Tuple
+from enum import Enum
+from queue import SimpleQueue
+import math
+class Dirs(Enum):
+    UP = 0
+    DOWN = 1
+    LEFT = 2
+    RIGHT = 3
 
 
-def solve_part_one(heatmap: List[List[int]]):
+def solve_part_one(heatmap: List[List[int]], for_part_two=False):
     """--- Day 9: Smoke Basin ---
 These caves seem to be lava tubes. Parts are even still volcanically active; small hydrothermal vents release smoke into the caves that slowly settles like rain.
 
@@ -41,15 +49,114 @@ Find all of the low points on your heightmap. What is the sum of the risk levels
                 are_low_points[y][x + 1] = heatmap[y][x + 1] < heatmap[y][x]
             if y < n_rows - 1 and are_low_points[y + 1][x]:
                 are_low_points[y + 1][x] = heatmap[y + 1][x] < heatmap[y][x]
+    if for_part_two:
+        return are_low_points
     for y in range(n_rows):
         for x in range(n_cols):
             if are_low_points[y][x]:
                 risk_level += 1 + heatmap[y][x]
     return risk_level
 
-def solve_part_two(input):
-    """"""
-    pass
+def solve_part_two(heatmap):
+    """--- Part Two ---
+Next, you need to find the largest basins so you know what areas are most important to avoid.
+
+A basin is all locations that eventually flow downward to a single low point. Therefore, every low point has a basin, although some basins are very small. Locations of height 9 do not count as being in any basin, and all other locations will always be part of exactly one basin.
+
+The size of a basin is the number of locations within the basin, including the low point. The example above has four basins.
+
+The top-left basin, size 3:
+
+2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+The top-right basin, size 9:
+
+2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+The middle basin, size 14:
+
+2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+The bottom-right basin, size 9:
+
+2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+Find the three largest basins and multiply their sizes together. In the above example, this is 9 * 14 * 9 = 1134.
+
+What do you get if you multiply together the sizes of the three largest basins?
+"""
+    n_rows, n_cols = len(heatmap), len(heatmap[0])
+    are_low_points: List[List[bool]] = solve_part_one(heatmap, for_part_two=True)
+    low_points_list: List[Tuple[int]] = []
+    for y in range(n_rows):
+        for x in range(n_cols):
+            if are_low_points[y][x]:
+                low_points_list.append((x, y))
+    # print(low_points_list)
+    basins_size: List[int] = []
+    """ The basin size of the ith low point """
+    for low_point in low_points_list:
+        basins_size.append(get_basin_size(heatmap, low_point))
+    return math.prod(sorted(basins_size, reverse=True)[:3])
+
+class Explore():
+    def __init__(self):
+        self.basin_size = 0
+        self.explore_queue = SimpleQueue()
+        self.explored_points = set()
+    
+    def __call__(self, x, y):
+        point = x, y
+        if point not in self.explored_points:
+            self.explored_points.add(point)
+            self.explore_queue.put(point)
+            self.basin_size += 1
+            # print(f'in queue: {point}')
+    def empty(self):
+        return self.explore_queue.empty()
+
+    def next(self):
+        point = self.explore_queue.get_nowait()
+        # print(f'exploring: {point}')
+        # print(f'explored: {self.explored_points}')
+        # print(f'queue size: {self.explore_queue.qsize()}')
+        # print(f'basin_size: {self.basin_size}')
+        return point
+
+def get_basin_size(heatmap: List[List[int]], low_point: Tuple[int]):
+    # print(f'\n\nlow point: {low_point}\n')
+    n_rows, n_cols = len(heatmap), len(heatmap[0])
+    explore = Explore()
+
+    x, y = low_point
+    explore(x, y)
+    while not explore.empty():
+        x, y = explore.next()
+        # (up, down, left, and right)
+        if x > 0 and heatmap[y][x - 1] != 9:
+            explore(x - 1, y)
+        if y > 0 and heatmap[y - 1][x] != 9:
+            explore(x, y - 1)
+        if x < n_cols - 1 and heatmap[y][x + 1] != 9:
+            explore(x + 1, y)
+        if y < n_rows - 1 and heatmap[y + 1][x] != 9:
+            explore(x, y + 1)
+    return explore.basin_size
+
+            
+
 
 def preprocess_input(input: str):
     heightmap = []

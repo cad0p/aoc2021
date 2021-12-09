@@ -54,6 +54,7 @@ class Entry():
 
     def __get_mapping(self):
         mapping = {c: set(SIGNALS) for c in SIGNALS}
+        patterns_with_len = {}
         for pattern in self.signal_patterns:
             digits = NUMBERS_LINES[len(pattern)]
             # for example dab => 7
@@ -67,6 +68,85 @@ class Entry():
                         raise FileNotFoundError('mapping not found')
                     elif len(mapping[c]) == 1:
                         mapping[c] = mapping[c].pop()
+            else:
+                if len(pattern) not in patterns_with_len:
+                    patterns_with_len[len(pattern)] = []
+                patterns_with_len[len(pattern)].append(pattern)
+        print(patterns_with_len)
+        # once we know the easy mappings,
+        # these are the options
+        # {'a': {'b', 'd', 'a'}, 
+        # 'b': {'e', 'b', 'f', 'a'}, 
+        # 'c': {'b', 'a'}, 
+        # 'd': {'e', 'b', 'f', 'a'}, 
+        # 'e': {'c', 'b', 'f', 'a', 'e', 'd', 'g'}, 
+        # 'f': {'b', 'a'}, 
+        # 'g': {'c', 'b', 'f', 'a', 'e', 'd', 'g'}}
+        for pattern_len, patterns in patterns_with_len.items():
+            # 5, [cdfbe, gcdfa, fbcad]
+            digits = NUMBERS_LINES[pattern_len]
+            for digit in digits:
+                # 2, 3, 5
+                for pattern in patterns:
+                    if not can_pattern_be_mapped_to_digit(pattern, digit):
+                        # remove pattern from digit
+
+            # for example cdfbe, gcdfa, fbcad have to be assigned to 2, 3 or 5
+            # 2, 3, 5 in standard mapping are "acdeg", "acdfg" and "abdfg"
+            # can we know which one of those it's the one?
+            # for 2: 
+            # a can be b, d or a
+            # c can be b or a
+            # d can be e, b, f or a
+            # e can be SIGNALS
+            # g can be SIGNALS
+            # cdfbe => 2?
+            # for a: cdfbe contains d and b
+            # for c: cdfbe contains  b
+            # for d: cdfbe contains e, b, f
+            # for e and g they are for sure verified
+            # so cdfbe could be 2
+            # gcdfa => 2?
+            # for a: gcdfa contains a, d
+            # for c: gcdfa contains a
+            # for d: gcdfa contains f, a
+            # for e and g they are for sure verified
+            # so gcdfa could be 2
+            # fbcad => 2?
+            # for a: fbcad contains b, d, a
+            # for c: fbcad contains b, a
+            # for d: fbcad contains b, f, a
+            # for e and g they are for sure verified
+            # so fbcad could be 2
+
+            # for 3:
+            # a can be b, d or a
+            # c can be b or a
+            # d can be e, b, f or a
+            # f can be b or a
+            # g can be SIGNALS
+            # cdfbe => 3?
+            # for a: cdfbe contains d, b
+            # for c: cdfbe contains b
+            # for d: cdfbe contains e, b, f
+            # for f: cdfbe contains b
+            # for g: it is for sure verified
+            # so cdfbe could be 3
+
+            # for 5 (abdfg):
+            # a can be b, d or a
+            # b can be {'e', 'b', 'f', 'a'}
+            # d can be e, b, f or a
+            # f can be b or a
+            # g can be SIGNALS
+            # cdfbe => 5?
+            # for a: cdfbe contains d, b
+            # for b: cdfbe contains f, b, e
+            # for d: cdfbe contains e, b, f
+            # for f: cdfbe contains b
+            # for g: it is for sure verified
+            # so cdfbe could be 5
+                
         print(mapping)
 
         def entry_mapping(signal):
@@ -117,6 +197,7 @@ For each display, you watch the changing signals for a while, make a note of all
 For example, here is what you might see in a single entry in your notes:
 
 acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf
+
 (The entry is [was] wrapped here to two lines so it fits; in your notes, it will all be on a single line.)
 
 Each entry consists of ten unique signal patterns, a | delimiter, and finally the four digit output value. Within an entry, the same wire/segment connections are used (but you don't know what the connections actually are). The unique signal patterns correspond to the ten different ways the submarine tries to render a digit using the current wire/segment connections. Because 7 is the only digit that uses three segments, dab in the above example means that to render a 7, signal lines d, a, and b are on. Because 4 is the only digit that uses four segments, eafb means that to render a 4, signal lines e, a, f, and b are on.

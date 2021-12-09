@@ -1,7 +1,7 @@
 
 
 
-from typing import List
+from typing import Dict, List
 
 SIGNALS = 'abcdefg'
 
@@ -57,6 +57,9 @@ class Entry():
         def update_mapping(digit, pattern):
             """ # for example dab => 7
             # so, 7 (acf) a, c and f can only be in 'dab' """
+
+            numbers_patterns[digit] = set(pattern)
+
             for c in NUMBERS_MAPPING[digit]:
                     if isinstance(mapping[c], str):
                         continue
@@ -67,31 +70,55 @@ class Entry():
                         mapping[c] = mapping[c].pop()
 
         mapping = {c: set(SIGNALS) for c in SIGNALS}
-        patterns_with_len = {}
-        numbers_patterns = {n: None for n in NUMBERS_MAPPING}
+        patterns_with_len: Dict[int, List[str]] = {}
+        numbers_patterns: Dict[int, set[str]] = {n: None for n in NUMBERS_MAPPING}
         for pattern in self.signal_patterns:
             digits = NUMBERS_LINES[len(pattern)]
             # for example dab => 7
             # so, 7 (acf) a, c and f can only be in 'dab'
             if isinstance(digit:=digits, int):
-                numbers_patterns[digit] = pattern
                 update_mapping(digit, pattern)    
             else:
                 if len(pattern) not in patterns_with_len:
                     patterns_with_len[len(pattern)] = []
                 patterns_with_len[len(pattern)].append(pattern)
         print(patterns_with_len)
-        # using 1, 7, 4, we derive 2, 3, 5
-        # for len_pattern, patterns in patterns_with_len.items():
-        #     if len_pattern == 5: # 2, 3, 5
-
-        
+        # KEY THING: using 1, 4, 7 we derive 
+        # got from: https://github.com/SnoozeySleepy/AdventofCode/blob/main/day8.py
+        # len 5: 2, 3, 5
+        # len 6: 0, 6, 9
+        for len_pattern, patterns in patterns_with_len.items():
+            for pattern in patterns:
+                if len_pattern == 5: # 2, 3, 5
+                    if (numbers_patterns[4] - numbers_patterns[1]).issubset(pattern):
+                        update_mapping(5, pattern)
+                    elif numbers_patterns[7].issubset(pattern):
+                        update_mapping(3, pattern)
+                    else:
+                        update_mapping(2, pattern)
+                elif len_pattern == 6: # 0, 6, 9
+                    if not numbers_patterns[1].issubset(pattern):
+                        update_mapping(6, pattern)
+                    elif numbers_patterns[4].issubset(pattern):
+                        update_mapping(9, pattern)
+                    else:
+                        update_mapping(0, pattern)
                 
         print(mapping)
-
+        print(numbers_patterns)
+        for value, mapped_value in mapping.items():
+            if not isinstance(mapped_value, str) and mapped_value:
+                mapping[value] = mapping[value].pop()
+            elif isinstance(mapped_value, str):
+                pass
+            else:
+                raise AssertionError(f'{value} cannot be mapped')
         
         def entry_mapping(signal):
-            return self.get_standard_digit(signal)
+            standard_signal = ''
+            for c in signal:
+                standard_signal += mapping[c]
+            return self.get_standard_digit(standard_signal)
         return entry_mapping
 
     def __decode_digits(self):
